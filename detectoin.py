@@ -1,4 +1,4 @@
-# detection.py
+
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -59,4 +59,5 @@ class SimpleDetector:
 
 if __name__ == '__main__':
     detector = SimpleDetector()
+
     detector.detect_spraying()
