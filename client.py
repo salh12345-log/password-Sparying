@@ -51,7 +51,7 @@ def main():
                 print(f"    فشل: {result['message']}")
 
         except Exception as e:
-            print(f"   ⚠  خطأ: {str(e)}")
+            print(f"     خطأ: {str(e)}")
 
     # حفظ النتائج
     with open('attack_results.json', 'w', encoding='utf-8') as f:
@@ -63,4 +63,5 @@ def main():
 
 
 if __name__ == '__main__':
+
     main()
