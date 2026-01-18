@@ -1,4 +1,3 @@
-# dashboard.py
 from flask import Flask, render_template_string
 import json
 
@@ -94,4 +93,5 @@ def dashboard():
 
 if __name__ == '__main__':
     print(" لوحة التحكم تعمل على http://127.0.0.1:5001")
+
     app.run(host='127.0.0.1', port=5001, debug=False)
