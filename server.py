@@ -144,9 +144,10 @@ if __name__ == '__main__':
     print("=" * 50)
     print(" بدء تشغيل الخادم على http://127.0.0.1:5000")
     print("=" * 50)
-    print(" نقاط النهاية المتاحة:")
+    print(" نقاالنهاية المتاحة:")
     print("  POST http://127.0.0.1:5000/login")
     print("  GET  http://127.0.0.1:5000/logs")
     print("  GET  http://127.0.0.1:5000/stats")
     print("=" * 50)
+
     app.run(host='127.0.0.1', port=5000, debug=True)
