@@ -1,5 +1,4 @@
-
-import json # لتخزين الملفات
+import json 
 import hashlib
 
 users = {
@@ -17,5 +16,6 @@ users = {
 
 with open('users_db.json', 'w') as f:
     json.dump(users, f, indent=2)
+
 
 print(" تم إنشاء قاعدة بيانات المستخدمين في users_db.json")
