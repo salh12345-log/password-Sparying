@@ -1,4 +1,3 @@
-
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -61,3 +60,4 @@ if __name__ == '__main__':
     detector = SimpleDetector()
 
     detector.detect_spraying()
+
