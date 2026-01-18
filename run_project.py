@@ -1,4 +1,3 @@
-# run_project.py
 import subprocess
 import sys
 import time
@@ -75,4 +74,5 @@ def run_project():
 
 
 if __name__ == "__main__":
+
     run_project()
