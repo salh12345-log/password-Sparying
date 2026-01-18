@@ -1,8 +1,6 @@
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
-
-
 class SimpleDetector:
     def __init__(self):
         self.logs = self.load_logs()
@@ -60,4 +58,5 @@ if __name__ == '__main__':
     detector = SimpleDetector()
 
     detector.detect_spraying()
+
 
