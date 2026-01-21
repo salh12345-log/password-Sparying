@@ -1,62 +1,84 @@
+
 import json
+import time
 from collections import defaultdict
-from datetime import datetime, timedelta
-class SimpleDetector:
+from datetime import datetime
+
+
+# إعدادات نظام الكشف
+
+LOG_FILE = "auth_logs.json"
+ALERT_THRESHOLD_ATTEMPTS = 5      # عدد المحاولات
+ALERT_THRESHOLD_USERS = 3         # عدد المستخدمين المختلفين
+TIME_WINDOW = 60                  # بالثواني
+
+
+# كلاس نظام الكشف
+
+class PasswordSprayingDetector:
     def __init__(self):
-        self.logs = self.load_logs()
+        self.attempts = defaultdict(list)
 
     def load_logs(self):
         try:
-            with open('login_logs.json', 'r', encoding='utf-8') as f:
+            with open(LOG_FILE, "r") as f:
                 return json.load(f)
-        except:
+        except FileNotFoundError:
+            print(" ملف السجلات غير موجود")
             return []
 
-    def detect_spraying(self):
-        print("🛡  نظام كشف هجمات رش كلمات المرور")
-        print("=" * 50)
+    def analyze_logs(self, logs):
+        print("\n بدء تحليل محاولات تسجيل الدخول...\n")
 
-        if not self.logs:
-            print(" لا توجد سجلات للتحليل")
-            return
+        for log in logs:
+            ip = log["ip"]
+            user = log["username"]
+            timestamp = log["timestamp"]
 
-        # تحليل حسب IP
-        ip_activity = defaultdict(list)
+            self.attempts[ip].append((user, timestamp))
 
-        for log in self.logs:
-            ip = log.get('ip', 'unknown')
-            ip_activity[ip].append(log)
+        self.detect_attacks()
 
-        for ip, logs in ip_activity.items():
-            # حساب عدد المستخدمين المختلفين
-            unique_users = set(log.get('username') for log in logs)
+    def detect_attacks(self):
+        for ip, records in self.attempts.items():
+            users = set()
+            times = []
 
-            # حساب الزمن بين أول وآخر محاولة
-            if len(logs) >= 2:
-                first_time = datetime.fromisoformat(logs[0]['timestamp'])
-                last_time = datetime.fromisoformat(logs[-1]['timestamp'])
-                time_diff = (last_time - first_time).total_seconds() / 60  # بالدقائق
-            else:
-                time_diff = 0
+            for user, ts in records:
+                users.add(user)
+                times.append(ts)
 
-            print(f"\n عنوان IP: {ip}")
-            print(f"    عدد المستخدمين المختلفين: {len(unique_users)}")
-            print(f"    إجمالي المحاولات: {len(logs)}")
-            print(f"     الفترة الزمنية: {time_diff:.1f} دقيقة")
+            times.sort()
+            duration = times[-1] - times[0] if len(times) > 1 else 0
 
-            # قاعدة الكشف: إذا حاول على أكثر من 3 مستخدمين في أقل من 5 دقائق
-            if len(unique_users) >= 3 and time_diff < 5:
-                print("   ⚠  **تم اكتشاف هجوم Password Spraying محتمل!**")
-                print("    المستخدمين: " + ", ".join(list(unique_users)[:5]))
-            else:
-                print("    نشاط طبيعي")
+            if (
+                len(records) >= ALERT_THRESHOLD_ATTEMPTS and
+                len(users) >= ALERT_THRESHOLD_USERS and
+                duration <= TIME_WINDOW
+            ):
+                self.raise_alert(ip, len(records), len(users), duration)
 
-        print("\n" + "=" * 50)
-
-
-if __name__ == '__main__':
-    detector = SimpleDetector()
-
-    detector.detect_spraying()
+    def raise_alert(self, ip, attempts, users, duration):
+        print("تحذير أمني ")
+        print(f" نوع الهجوم      : Password Spraying")
+        print(f" عنوان IP        : {ip}")
+        print(f" عدد المحاولات   : {attempts}")
+        print(f" عدد المستخدمين : {users}")
+        print(f" الزمن           : {duration} ثانية")
+        print(f" وقت الاكتشاف    : {datetime.now()}")
+        print("-" * 50)
 
 
+# تشغيل نظام الكشف
+
+def main():
+    detector = PasswordSprayingDetector()
+    logs = detector.load_logs()
+
+    if logs:
+        detector.analyze_logs(logs)
+    else:
+        print(" لا توجد بيانات لتحليلها")
+
+if __name__ == "__main__":
+    main()
