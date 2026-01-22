@@ -1,96 +1,149 @@
-#  Password Spraying Attack Simulator with Intelligent Detection
+# Authentication Server with Login Monitoring (Simulation)
 
-![Python]
-![Flask]
-![Status]
+This project is a simple authentication server built using Python and Flask.  
+It is designed for educational purposes to demonstrate how login systems work,
+how login attempts are logged, and how basic account lockout mechanisms can be applied.
 
-A comprehensive security project that simulates a **Password Spraying** attack and implements an intelligent detection system. Built for educational purposes to understand modern authentication threats and defense mechanisms.
+The project runs in a safe local environment (localhost only) and does not interact
+with any external systems.
 
-##  Key Features
+---
 
-*   **Realistic Attack Simulation**: Mimics real-world password spraying tactics with time delays and common password lists.
-*   **Intelligent Detection Engine**: Advanced heuristics to identify spray patterns based on IP, time windows, and unique user targeting.
-*   **Safety-First Design**: All attacks are confined to `localhost` with automatic account lockout protections.
-*   **Interactive Dashboard**: A live web dashboard to visualize attack attempts, statistics, and detection alerts.
-*   **Full Logging & Analysis**: Comprehensive JSON logging for post-attack analysis and reporting.
+## Project Goals
 
-##  Quick Start
+- Implement a basic authentication server
+- Handle user login requests using a REST API
+- Log all login attempts with timestamps
+- Apply temporary account lockout after repeated failed attempts
+- Demonstrate defensive security concepts in practice
 
-### Prerequisites
-*   Python 3.8 or higher
-*   pip (Python package installer)
+---
 
-### Installation & Run
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/password-spraying-simulator.git
-    cd password-spraying-simulator
-    ```
-2.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Run the complete project:**
-    ```bash
-    python run_project.py
-    ```
-    *Follow the on-screen menu to launch all components.*
+## Project Files
 
-##  Project Architecture
+```
+password-spraying-main/
+│
+├── server.py           Authentication server (Flask)
+├── users_db.json       Local users database
+├── login_logs.json     Log file for login attempts
+├── requirements.txt    Required Python libraries
+└── README.md           Project documentation
+```
 
-The simulator is built from four core components that work together:
+---
 
-*   **`create_db.py`**: Creates a local JSON database of sample users and passwords.
-*   **`server.py`**: The target authentication server (Flask app) with a `/login` endpoint.
-*   **`client.py`**: The attacker client that performs the password spraying simulation.
-*   **`detection.py`**: The detection engine that analyzes logs and identifies spray patterns.
-*   **`dashboard.py`**: A web-based dashboard to monitor activity in real-time.
-*   **`run_project.py`**: The main controller script to orchestrate all components.
+## How the System Works
 
-##  How It Works
+1. The server receives login requests through an API endpoint.
+2. The username and password are validated against a local JSON database.
+3. Every login attempt is recorded in a log file.
+4. If a user fails to log in multiple times, the account is temporarily locked.
+5. Only requests from localhost are allowed to ensure a safe testing environment.
 
-### 1. The Attack (Password Spraying)
-Unlike brute-force attacks, the client (`client.py`) takes a **single common password** (e.g., `Winter2024!`) and tries it against a **list of many usernames**. It introduces random delays (2-5 seconds) between attempts to evade traditional, per-account lockout policies.
+---
 
-### 2. The Defense (Intelligent Detection)
-The detection system (`detection.py`) monitors login attempts and flags suspicious activity not caught by simple thresholds. It triggers an alert if a single IP address attempts to log into **more than 5 different user accounts** within a short time window (e.g., 10 minutes).
+## Security Rules Applied
 
-### 3. The Dashboard
-The live dashboard (`http://127.0.0.1:5001`) provides a visual overview, showing metrics like total attempts, active IPs, locked accounts, and detected threats with color-coded risk indicators.
+- Maximum failed login attempts: **5**
+- Account lock duration: **3 minutes**
+- Access restricted to localhost only (`127.0.0.1`)
 
-## 🔧 Usage Details
+---
 
-### Running Components Individually
-For development or testing, you can run each part separately (in order):
+## Installation and Running
 
-1.  **Set up the user database:**
-    ```bash
-    python create_db.py
-    ```
-2.  **Start the target authentication server:**
-    ```bash
-    python server.py
-    ```
-    *Server runs at: `http://127.0.0.1:5000`*
-3.  **Launch the monitoring dashboard (new terminal):**
-    ```bash
-    python dashboard.py
-    ```
-    *Dashboard runs at: `http://127.0.0.1:5001`*
-4.  **Execute the attack simulation (new terminal):**
-    ```bash
-    python client.py
-    ```
-5.  **Run the detection analysis:**
-    ```bash
-    python detection.py
-    ```
+### Requirements
 
-### Key Project URLs
-*   **Dashboard**: `http://127.0.0.1:5001`
-*   **Server API**: `http://127.0.0.1:5000`
-    *   `POST /login` - Main login endpoint
-    *   `GET /logs` - View attempt logs
-    *   `GET /stats` - Get server statistics
+- Python 3.8 or higher
+- pip package manager
 
-##  Example Output & Detection
+### Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run the Server
+
+```bash
+python server.py
+```
+
+After running, the server will be available at:
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## API Endpoints
+
+### Login
+
+**POST** `/login`
+
+Request example:
+```json
+{
+  "username": "admin",
+  "password": "Password123!"
+}
+```
+
+Possible responses:
+- `200` Login successful
+- `401` Invalid username or password
+- `423` Account temporarily locked
+- `400` Missing username or password
+
+---
+
+### Health Check
+
+**GET** `/health`
+
+Response example:
+```json
+{
+  "status": "running",
+  "time": "2026-01-22T22:00:00"
+}
+```
+
+---
+
+## Logging
+
+All login attempts are stored in the file:
+
+```
+login_logs.json
+```
+
+Each record contains:
+- Date and time
+- IP address
+- Username
+- Login status
+- Reason for failure or success
+
+This allows analysis of login behavior and testing of security controls.
+
+---
+
+## Usage Notes
+
+- This project is for learning and testing only.
+- All data is stored locally.
+- No real user accounts or real passwords are used.
+- The system is not intended for production environments.
+
+---
+
+## Conclusion
+
+This project demonstrates the basic structure of an authentication server and shows
+how simple security measures such as logging and account lockout can help protect
+systems from repeated unauthorized access attempts.
