@@ -1,84 +1,72 @@
-
+# detection.py
 import json
-import time
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
+LOG_FILE = "login_logs.json"
 
-# إعدادات نظام الكشف
-
-LOG_FILE = "auth_logs.json"
-ALERT_THRESHOLD_ATTEMPTS = 5      # عدد المحاولات
-ALERT_THRESHOLD_USERS = 3         # عدد المستخدمين المختلفين
-TIME_WINDOW = 60                  # بالثواني
-
-
-# كلاس نظام الكشف
-
-class PasswordSprayingDetector:
+class AuthenticationBehaviorDetector:
     def __init__(self):
-        self.attempts = defaultdict(list)
+        self.logs = self.load_logs()
 
     def load_logs(self):
         try:
-            with open(LOG_FILE, "r") as f:
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except FileNotFoundError:
-            print(" ملف السجلات غير موجود")
+        except:
             return []
 
-    def analyze_logs(self, logs):
-        print("\n بدء تحليل محاولات تسجيل الدخول...\n")
+    def analyze(self):
+        print("=" * 60)
+        print(" Authentication Behavior Analysis System")
+        print("=" * 60)
 
-        for log in logs:
-            ip = log["ip"]
-            user = log["username"]
-            timestamp = log["timestamp"]
+        if not self.logs:
+            print(" No login activity found.")
+            return
 
-            self.attempts[ip].append((user, timestamp))
+        ip_activity = defaultdict(list)
 
-        self.detect_attacks()
+        # تجميع المحاولات حسب IP
+        for log in self.logs:
+            ip = log.get("ip", "unknown")
+            ip_activity[ip].append(log)
 
-    def detect_attacks(self):
-        for ip, records in self.attempts.items():
-            users = set()
-            times = []
+        for ip, attempts in ip_activity.items():
+            usernames = set()
+            failed_attempts = 0
 
-            for user, ts in records:
-                users.add(user)
-                times.append(ts)
+            timestamps = [
+                datetime.fromisoformat(a["timestamp"])
+                for a in attempts
+                if "timestamp" in a
+            ]
 
-            times.sort()
-            duration = times[-1] - times[0] if len(times) > 1 else 0
+            if timestamps:
+                duration = (max(timestamps) - min(timestamps)).total_seconds() / 60
+            else:
+                duration = 0
 
-            if (
-                len(records) >= ALERT_THRESHOLD_ATTEMPTS and
-                len(users) >= ALERT_THRESHOLD_USERS and
-                duration <= TIME_WINDOW
-            ):
-                self.raise_alert(ip, len(records), len(users), duration)
+            for a in attempts:
+                usernames.add(a.get("username"))
+                if a.get("status") == "FAILED":
+                    failed_attempts += 1
 
-    def raise_alert(self, ip, attempts, users, duration):
-        print("تحذير أمني ")
-        print(f" نوع الهجوم      : Password Spraying")
-        print(f" عنوان IP        : {ip}")
-        print(f" عدد المحاولات   : {attempts}")
-        print(f" عدد المستخدمين : {users}")
-        print(f" الزمن           : {duration} ثانية")
-        print(f" وقت الاكتشاف    : {datetime.now()}")
-        print("-" * 50)
+            print(f"\n IP Address: {ip}")
+            print(f" Total Attempts: {len(attempts)}")
+            print(f" Failed Attempts: {failed_attempts}")
+            print(f" Unique Usernames: {len(usernames)}")
+            print(f" Time Window: {duration:.1f} minutes")
 
+            # قاعدة كشف سلوكي (Behavior-based)
+            if failed_attempts >= 5 and duration <= 10:
+                print("   Suspicious authentication behavior detected")
+            else:
+                print("  Normal authentication behavior")
 
-# تشغيل نظام الكشف
+        print("\n" + "=" * 60)
 
-def main():
-    detector = PasswordSprayingDetector()
-    logs = detector.load_logs()
-
-    if logs:
-        detector.analyze_logs(logs)
-    else:
-        print(" لا توجد بيانات لتحليلها")
 
 if __name__ == "__main__":
-    main()
+    detector = AuthenticationBehaviorDetector()
+    detector.analyze()
